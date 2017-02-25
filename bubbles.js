@@ -1,6 +1,7 @@
 var canvas;
 var gl;
 var squareVerticesBuffer;
+var verticesCount;
 var mvMatrix;
 var shaderProgram;
 var vertexPositionAttribute;
@@ -90,17 +91,25 @@ var horizAspect = 800.0/800.0;
 
 function prepareVertices() {
   // sphere:
-  for (var i = 0; i < 100; i++) {
-    for var j = 0; j < 100; j++) {
-      
+  var vertices = [];
+  for (var i = 0; i < 2; i += 0.1) {
+    for (var j = 0; j < 2; j += 0.1) {
+      var v = [
+        i, j, 0.0,
+        i + 0.1, j + .1, 0.1,
+        i, j + 0.1, -0.1,
+        i + 0.1, j, 0.0
+      ];
+      vertices = vertices.concat(v);
     }
   }
-  var vertices = [
-    1.0,  1.0,  0.0,
-    -1.0, 1.2,  0.0,
-    1.0,  -1.0, 0.0,
-    -1.0, -1.0, 0.0
-  ];
+//  var vertices = [
+//    1.0,  1.0,  0.0,
+//    -1.0, 1.2,  0.0,
+//    1.0,  -1.0, 0.0,
+//    -1.0, -1.0, 0.0
+//  ];
+  verticesCount = vertices.length / 3;
   return vertices; 
 }
 
@@ -112,18 +121,26 @@ function initBuffers() {
   gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
 }
 
+var angle = 0;
+
 function drawScene() {
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
   
   perspectiveMatrix = makePerspective(45, 800.0/800.0, 0.1, 100.0);
+
+  angle += 0.05;
+  if (angle > 6.28) {
+    angle -= 6.28;
+  }
   
   loadIdentity();
   mvTranslate([-0.0, 0.0, -6.0]);
+  mvRotate(angle, $V([1, .2, 0.1]));
   
   gl.bindBuffer(gl.ARRAY_BUFFER, squareVerticesBuffer);
   gl.vertexAttribPointer(vertexPositionAttribute, 3, gl.FLOAT, false, 0, 0);
   setMatrixUniforms();
-  gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+  gl.drawArrays(gl.TRIANGLE_STRIP, 0, verticesCount);
 }
 
 function loadIdentity() {
@@ -132,6 +149,11 @@ function loadIdentity() {
 
 function multMatrix(m) {
   mvMatrix = mvMatrix.x(m);
+}
+
+function mvRotate(angle, axis) {
+  var m = Matrix.Rotation(angle, axis).ensure4x4();
+  multMatrix(m);
 }
 
 function mvTranslate(v) {
