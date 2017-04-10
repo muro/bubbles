@@ -2,6 +2,7 @@ var canvas;
 var gl;
 var squareVerticesBuffer;
 var verticesCount;
+var colorsCount;
 var mvMatrix;
 var shaderProgram;
 var vertexPositionAttribute;
@@ -52,6 +53,9 @@ function initShaders() {
   
   vertexPositionAttribute = gl.getAttribLocation(shaderProgram, 'aVertexPosition');
   gl.enableVertexAttribArray(vertexPositionAttribute);
+
+  vertexColorAttribute = gl.getAttribLocation(shaderProgram, "aVertexColor");
+  gl.enableVertexAttribArray(vertexColorAttribute);
 }
 
 function getShader(gl, id, type) {
@@ -92,6 +96,7 @@ var horizAspect = 800.0/800.0;
 function prepareVertices() {
   // sphere:
   var vertices = [];
+  var colors = []
   for (var i = 0; i < 2; i += 0.1) {
     for (var j = 0; j < 2; j += 0.1) {
       var v = [
@@ -100,7 +105,14 @@ function prepareVertices() {
         i, j + 0.1, -0.1,
         i + 0.1, j, 0.0
       ];
+      var c = [
+        0.0, 0.3, 0.6, 1.0,
+        0.9, 0.9, 0.6, 0.0,
+        0.0, 0.6, 0.0, 1.0,
+        0.6, 0.1, 0.6, 0.0,
+      ];
       vertices = vertices.concat(v);
+      colors = colors.concat(c);
     }
   }
 //  var vertices = [
@@ -110,15 +122,23 @@ function prepareVertices() {
 //    -1.0, -1.0, 0.0
 //  ];
   verticesCount = vertices.length / 3;
-  return vertices; 
+  colorsCount = colors.length / 4;
+  return {"vertices": vertices, "verticesCount": verticesCount,
+          "colors": colors, "colorsCount": colorsCount}; 
 }
 
 function initBuffers() {
   squareVerticesBuffer = gl.createBuffer();
   gl.bindBuffer(gl.ARRAY_BUFFER, squareVerticesBuffer);
 
-  var vertices = prepareVertices();
+  squareVerticesColorBuffer = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, squareVerticesColorBuffer);
+
+  var data = prepareVertices();
+  var vertices = data["vertices"];
+  var colors = data["colors"];
   gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(colors), gl.STATIC_DRAW);
 }
 
 var angle = 0;
@@ -139,6 +159,10 @@ function drawScene() {
   
   gl.bindBuffer(gl.ARRAY_BUFFER, squareVerticesBuffer);
   gl.vertexAttribPointer(vertexPositionAttribute, 3, gl.FLOAT, false, 0, 0);
+
+  gl.bindBuffer(gl.ARRAY_BUFFER, squareVerticesColorBuffer);
+  gl.vertexAttribPointer(vertexColorAttribute, 4, gl.FLOAT, false, 0, 0);
+
   setMatrixUniforms();
   gl.drawArrays(gl.TRIANGLE_STRIP, 0, verticesCount);
 }
